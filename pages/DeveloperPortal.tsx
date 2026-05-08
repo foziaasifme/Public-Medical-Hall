@@ -235,7 +235,7 @@ export const DeveloperPortal: React.FC<DeveloperPortalProps> = ({ onClose }) => 
   ];
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] pb-20 overflow-y-auto">
+    <div className="min-h-[100dvh] bg-[#F0F2F5] pb-20 overflow-y-auto">
       <div className="max-w-6xl mx-auto p-6 md:p-10 pt-20 relative">
         <motion.button 
           initial={{ opacity: 0, x: -20 }}

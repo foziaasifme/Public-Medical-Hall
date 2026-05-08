@@ -417,7 +417,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-[#F0F2F5] text-gray-900 font-sans overflow-hidden">
+    <div className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#F0F2F5] text-gray-900 font-sans overflow-hidden">
       
       {/* Mobile Top Header (Visible only on Mobile) */}
       <header className="md:hidden flex items-center justify-between p-4 bg-medical-blue text-white shadow-md fixed top-0 left-0 w-full z-30 h-16">
@@ -461,7 +461,7 @@ const App: React.FC = () => {
       />
       
       {/* Main Content Area */}
-      <main className="flex-1 p-4 pt-20 pb-24 md:p-6 md:pb-6 h-screen overflow-y-auto relative flex flex-col transition-all duration-300">
+      <main className="flex-1 p-4 pt-20 pb-24 md:p-6 md:pb-6 h-full overflow-y-auto relative flex flex-col transition-all duration-300">
         
         {/* Desktop Header - Hidden on Mobile */}
         <div className="hidden md:flex md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-gray-200 shadow-sm gap-4 animate-in slide-in-from-top-4 duration-500">

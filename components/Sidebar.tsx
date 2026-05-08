@@ -101,8 +101,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, 
     <aside className={clsx(
       "fixed md:static z-40 bg-white/60 backdrop-blur-xl border-gray-200 shadow-xl transition-all duration-300",
       // Desktop & Tablet: Compact Icon Sidebar
-      "lg:left-0 lg:top-0 lg:w-20 lg:h-screen lg:flex-col lg:border-r lg:justify-between lg:pb-0",
-      "md:left-0 md:top-0 md:w-20 md:h-screen md:flex-col md:border-r md:border-t-0 md:justify-between",
+      "lg:left-0 lg:top-0 lg:w-20 lg:h-[100dvh] lg:flex-col lg:border-r lg:justify-between lg:pb-0",
+      "md:left-0 md:top-0 md:w-20 md:h-[100dvh] md:flex-col md:border-r md:border-t-0 md:justify-between",
       // Mobile: Bottom Navigation
       "bottom-0 left-0 w-full h-auto border-t flex flex-row items-center justify-between px-2 py-1 md:py-0"
     )}>

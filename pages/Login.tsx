@@ -129,7 +129,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const formattedDate = currentTime.toLocaleDateString('en-US', { day: 'numeric', month: 'long', weekday: 'long' });
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#e11d48] via-[#7e22ce] to-[#1e1b4b] overflow-hidden text-white flex flex-col font-sans relative">
+    <div className="min-h-[100dvh] w-full bg-gradient-to-br from-[#e11d48] via-[#7e22ce] to-[#1e1b4b] overflow-y-auto text-white flex flex-col font-sans relative">
       
       {/* Decorative large circles for background effect */}
       <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[80%] bg-purple-600/30 blur-[120px] rounded-full pointer-events-none"></div>
@@ -163,7 +163,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
              <span>Help</span>
              
              {/* Floating Window (Popover) */}
-             <div className="absolute top-full right-0 mt-4 w-96 bg-[#1e1b4b]/95 backdrop-blur-3xl border border-white/20 rounded-2xl shadow-2xl p-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right z-50 text-white shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+             <div className="absolute top-full right-0 mt-4 w-[85vw] sm:w-96 bg-[#1e1b4b]/95 backdrop-blur-3xl border border-white/20 rounded-2xl shadow-2xl p-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right z-50 text-white shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
                <h3 className="text-lg font-bold mb-3 border-b border-white/10 pb-2 flex items-center gap-2">ⓘ Help</h3>
                <div className="space-y-3 text-sm font-light">
                  <p><span className="font-semibold text-pink-200">Company Name:</span> {companySettings?.name || companyName}</p>
