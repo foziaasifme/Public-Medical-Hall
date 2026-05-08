@@ -320,8 +320,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </form>
 
               <div className="mt-8 text-center space-y-1">
-                 <p className="text-xs text-white/40">Default Admin: admin / 1234</p>
-                 <p className="text-xs text-white/40">Default Staff: staff / staff</p>
                  <div className="pt-4 border-t border-white/5 mt-4">
                    <a href="http://mediaplus1.vercel.app" target="_blank" rel="noopener noreferrer" className="opacity-40 hover:opacity-100 transition-opacity text-[10px] uppercase font-bold tracking-widest text-pink-100">
                      Mediaplus POS 1.2.0 Standard Edition
