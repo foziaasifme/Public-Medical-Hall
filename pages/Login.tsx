@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { ADMIN_PASS } from '../constants';
 import { Lock, User as UserIcon, Wifi, Database, CloudSun, Bell, Phone, LogIn, HelpCircle } from 'lucide-react';
 import { storageService } from '../services/storageService';
+import { InstallButton } from '../components/InstallButton';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -263,6 +264,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
              </div>
           </div>
+
+          {/* Install App Section */}
+          <div className="mt-8 flex flex-col gap-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 text-pink-100 ml-1">Application Hub</p>
+            <InstallButton />
+          </div>
         </div>
 
         {/* Right Column - Login Overlay */}
@@ -319,9 +326,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 </Button>
               </form>
 
-              <div className="mt-8 text-center space-y-1">
-                 <div className="pt-4 border-t border-white/5 mt-4">
-                   <a href="http://mediaplus1.vercel.app" target="_blank" rel="noopener noreferrer" className="opacity-40 hover:opacity-100 transition-opacity text-[10px] uppercase font-bold tracking-widest text-pink-100">
+              <div className="mt-2 text-center">
+                 <div className="pt-1 border-t border-white/5">
+                   <a href="http://mediaplus1.vercel.app" target="_blank" rel="noopener noreferrer" className="opacity-30 hover:opacity-100 transition-opacity text-[9px] uppercase font-bold tracking-widest text-pink-100 italic">
                      Mediaplus POS 1.2.0 Standard Edition
                    </a>
                  </div>

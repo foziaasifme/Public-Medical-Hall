@@ -58,12 +58,15 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, onClick, a
                <h3 className="font-bold text-gray-900 leading-tight truncate text-base group-hover:text-blue-700 transition-colors">
                  {medicine.name}
                </h3>
-               {inventoryMode && (
-                 <div className="flex items-center gap-2 mt-0.5">
-                   <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">#{medicine.id.slice(-4)}</span>
-                   {medicine.batchNumber && <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">Batch: {medicine.batchNumber}</span>}
-                 </div>
-               )}
+               <div className="flex items-center gap-2 mt-0.5">
+                 <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wider">{medicine.category}</span>
+                 {inventoryMode && (
+                   <>
+                     <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">#{medicine.id.slice(-4)}</span>
+                     {medicine.batchNumber && <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">Batch: {medicine.batchNumber}</span>}
+                   </>
+                 )}
+               </div>
              </div>
            </div>
            
@@ -74,7 +77,7 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({ medicine, onClick, a
 
            {medicine.rackNo && (
              <p className="text-[10px] text-gray-500 font-semibold truncate flex items-center gap-1 mt-1">
-               <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded uppercase tracking-wider">Rack: {medicine.rackNo}</span>
+               <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded uppercase tracking-wider font-black border border-blue-100 italic">Rack: {medicine.rackNo}</span>
              </p>
            )}
 

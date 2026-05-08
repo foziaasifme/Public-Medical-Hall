@@ -503,11 +503,13 @@ const App: React.FC = () => {
         {renderContent()}
 
         {/* Global Footer */}
-        <div className="mt-auto pt-8 pb-4 w-full flex justify-center items-center opacity-60 hover:opacity-100 transition-opacity">
-           <span className="bg-gray-100 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest text-gray-500 uppercase shadow-inner border border-gray-200/60">
+        <footer className="mt-auto w-full py-1 text-center opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+           <div className="h-[1px] flex-1 bg-gray-200/20 max-w-[50px]"></div>
+           <span className="text-[9px] font-bold tracking-[0.2em] text-gray-400 uppercase whitespace-nowrap">
               Version: Mediaplus POS 1.2.0 Standard Edition
            </span>
-        </div>
+           <div className="h-[1px] flex-1 bg-gray-200/20 max-w-[50px]"></div>
+        </footer>
 
         {/* Modals */}
         <AnimatePresence>
