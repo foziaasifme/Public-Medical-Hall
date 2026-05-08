@@ -15,8 +15,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [companySettings, setCompanySettings] = useState<any>(null);
   const [companyName, setCompanyName] = useState('MEDIPOS');
-  const [weather, setWeather] = useState<{temp: number | null, desc: string}>({ temp: null, desc: 'Fetching weather...' });
+  const [weather, setWeather] = useState<{temp: number | null, desc: string, location?: string}>({ temp: null, desc: 'Fetching weather...' });
   const [latestStockEntry, setLatestStockEntry] = useState<any>(null);
 
   useEffect(() => {
@@ -27,8 +28,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   useEffect(() => {
     const fetchCompanySettings = async () => {
       const settings = await storageService.getCompanySettings();
-      if (settings && settings.name) {
-        setCompanyName(settings.name);
+      if (settings) {
+        setCompanySettings(settings);
+        if (settings.name) setCompanyName(settings.name);
       }
     };
     const fetchLatestStockEntry = async () => {
@@ -51,6 +53,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             const { latitude, longitude } = position.coords;
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
             const data = await res.json();
+            
+            let locName = '';
+            try {
+              const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+              const geoData = await geoRes.json();
+              locName = [geoData.city || geoData.locality, geoData.countryName].filter(Boolean).join(', ');
+            } catch (e) {
+              console.error('Failed to fetch location name', e);
+            }
+
             if (data.current_weather) {
               const code = data.current_weather.weathercode;
               let desc = 'Clear';
@@ -63,7 +75,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               
               setWeather({
                 temp: Math.round(data.current_weather.temperature),
-                desc
+                desc,
+                location: locName
               });
             }
           } catch (e) {
@@ -150,23 +163,30 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
              <span>Help</span>
              
              {/* Floating Window (Popover) */}
-             <div className="absolute top-full right-0 mt-4 w-80 bg-[#1e1b4b] border border-white/20 rounded-2xl shadow-2xl p-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right z-50 text-white shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-               <h3 className="text-lg font-bold mb-3 border-b border-white/10 pb-2">About {companyName}</h3>
+             <div className="absolute top-full right-0 mt-4 w-96 bg-[#1e1b4b]/95 backdrop-blur-3xl border border-white/20 rounded-2xl shadow-2xl p-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right z-50 text-white shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+               <h3 className="text-lg font-bold mb-3 border-b border-white/10 pb-2 flex items-center gap-2">ⓘ Help</h3>
                <div className="space-y-3 text-sm font-light">
-                 <p><span className="font-semibold text-pink-200">Location:</span> Main Street Medical District</p>
-                 <p><span className="font-semibold text-pink-200">Contact:</span> +92 302 683 4300</p>
+                 <p><span className="font-semibold text-pink-200">Company Name:</span> {companySettings?.name || companyName}</p>
+                 <p><span className="font-semibold text-pink-200">License No:</span> {companySettings?.license || 'Not Available'}</p>
+                 <p><span className="font-semibold text-pink-200">Location:</span> {companySettings?.address || 'Not Available'}</p>
+                 <p><span className="font-semibold text-pink-200">Contact:</span> {companySettings?.contact || 'Not Available'}</p>
                  <p><span className="font-semibold text-pink-200">Timing:</span> Full Week (8:00 AM - 7:00 PM)</p>
                  
                  <div className="border-t border-white/10 pt-2 mt-2">
-                   <h4 className="font-semibold text-pink-200 mb-1">Legal Info</h4>
-                   <p className="text-xs opacity-80 leading-relaxed">By using this system, you agree to our Terms of Service (TORs) and Privacy Policy regarding patient data handling.</p>
+                   <h4 className="font-semibold text-pink-200 mb-1">Pharmacy Policies</h4>
+                   <ul className="text-xs opacity-80 leading-relaxed list-disc pl-4 space-y-1">
+                     <li>Check prescription for accuracy before dispensing.</li>
+                     <li>Ensure proper storage temperature for all medical items.</li>
+                     <li>Maintain strict patient confidentiality at all times.</li>
+                     <li>Ensure compliance with standards for handling patient data (TORs).</li>
+                   </ul>
                  </div>
                  
                  <div className="border-t border-white/10 pt-3 mt-4 bg-black/20 -mx-6 -mb-6 p-6 rounded-b-2xl">
-                   <h4 className="text-xs font-bold uppercase tracking-wider text-white/50 mb-2">Developer</h4>
-                   <div className="space-y-1.5 text-xs">
+                   <h4 className="text-xs font-bold uppercase tracking-wider text-white/50 mb-2">&lt;&gt; Developer Info:</h4>
+                   <div className="space-y-1.5 text-xs mb-3">
                      <a href="http://mediaplus1.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-pink-300 transition-colors">
-                       <span className="opacity-70">🔗</span> Mediaplus
+                       <span className="opacity-70">🔗</span> Mediaplus POS 1.2.0 Standard Edition
                      </a>
                      <a href="https://wa.me/923036834300" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-pink-300 transition-colors">
                        <span className="opacity-70">✆</span> +923036834300 (WhatsApp)
@@ -175,6 +195,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                        <span className="opacity-70">✉</span> m.asif.anwar@gmail.com
                      </a>
                    </div>
+                   <p className="text-white/70 text-xs border-t border-white/10 pt-3 mt-3">Version: <span className="text-white font-semibold">Mediaplus POS 1.2.0 Standard Edition</span></p>
                  </div>
                </div>
              </div>
@@ -195,8 +216,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
             <div className="flex items-center gap-3 mt-4 text-pink-100">
                  <CloudSun size={32} className="text-yellow-400 drop-shadow-md" />
-                 <span className="text-3xl font-semibold">{weather.temp !== null ? `${weather.temp}°` : '--°'}</span>
-                 <span className="text-sm opacity-90 font-medium tracking-wide">{weather.desc}</span>
+                 <div className="flex flex-col">
+                   <div className="flex items-center gap-2">
+                     <span className="text-3xl font-semibold">{weather.temp !== null ? `${weather.temp}°` : '--°'}</span>
+                     <span className="text-sm opacity-90 font-medium tracking-wide">{weather.desc}</span>
+                   </div>
+                   {weather.location && <span className="text-xs opacity-75">{weather.location}</span>}
+                 </div>
             </div>
           </div>
 
@@ -240,11 +266,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
           {/* Footer info (Mobile & Desktop) */}
           <div className="mt-auto pt-8 flex justify-between items-end opacity-60 text-xs">
-             <a href="https://wa.me/923026834300" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-100 transition-opacity cursor-pointer text-pink-100">
-               <Phone size={16} />
-               <span className="font-medium">+923026834300</span>
-             </a>
-             <a href="http://mediaplus1.vercel.app" target="_blank" rel="noopener noreferrer" className="text-pink-100 hover:opacity-100 transition-opacity">Mediaplus</a>
+             <div></div>
+             <a href="http://mediaplus1.vercel.app" target="_blank" rel="noopener noreferrer" className="text-pink-100 hover:opacity-100 transition-opacity">Mediaplus POS 1.2.0 Standard Edition</a>
           </div>
         </div>
 
