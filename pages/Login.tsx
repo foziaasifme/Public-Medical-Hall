@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { Button } from '../components/ui/Button';
 import { ADMIN_PASS } from '../constants';
-import { Lock, User as UserIcon, Wifi, Database, CloudSun, Bell, Phone, LogIn } from 'lucide-react';
+import { Lock, User as UserIcon, Wifi, Database, CloudSun, Bell, Phone, LogIn, HelpCircle } from 'lucide-react';
 import { storageService } from '../services/storageService';
 
 interface LoginProps {
@@ -15,10 +15,68 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [companyName, setCompanyName] = useState('MEDIPOS');
+  const [weather, setWeather] = useState<{temp: number | null, desc: string}>({ temp: null, desc: 'Fetching weather...' });
+  const [latestStockEntry, setLatestStockEntry] = useState<any>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchCompanySettings = async () => {
+      const settings = await storageService.getCompanySettings();
+      if (settings && settings.name) {
+        setCompanyName(settings.name);
+      }
+    };
+    const fetchLatestStockEntry = async () => {
+      const entries = await storageService.getStockEntries();
+      const inEntries = entries.filter(e => e.type === 'IN');
+      if (inEntries.length > 0) {
+        inEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setLatestStockEntry(inEntries[0]);
+      }
+    };
+    fetchCompanySettings();
+    fetchLatestStockEntry();
+  }, []);
+
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+            const data = await res.json();
+            if (data.current_weather) {
+              const code = data.current_weather.weathercode;
+              let desc = 'Clear';
+              if (code >= 1 && code <= 3) desc = 'Partly Cloudy';
+              if (code >= 45 && code <= 48) desc = 'Foggy';
+              if (code >= 51 && code <= 67) desc = 'Rainy';
+              if (code >= 71 && code <= 77) desc = 'Snowy';
+              if (code >= 80 && code <= 82) desc = 'Showers';
+              if (code >= 95) desc = 'Thunderstorm';
+              
+              setWeather({
+                temp: Math.round(data.current_weather.temperature),
+                desc
+              });
+            }
+          } catch (e) {
+            setWeather({ temp: null, desc: 'Weather unavailable' });
+          }
+        },
+        () => {
+          setWeather({ temp: null, desc: 'Location access denied' });
+        }
+      );
+    } else {
+      setWeather({ temp: null, desc: 'Location not supported' });
+    }
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -54,8 +112,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
   };
 
-  const formattedTime = currentTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-  const formattedDate = currentTime.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+  const formattedTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const formattedDate = currentTime.toLocaleDateString('en-US', { day: 'numeric', month: 'long', weekday: 'long' });
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#e11d48] via-[#7e22ce] to-[#1e1b4b] overflow-hidden text-white flex flex-col font-sans relative">
@@ -65,12 +123,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="absolute bottom-[-20%] left-[10%] w-[50%] h-[60%] bg-pink-600/20 blur-[100px] rounded-full pointer-events-none"></div>
 
       {/* Header */}
-      <header className="flex justify-between items-center p-6 lg:px-12 relative z-10 w-full">
+      <header className="flex justify-between items-center p-6 lg:px-12 relative z-50 w-full">
         <div className="flex items-center gap-3">
-           <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg">
-              <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhh-i9gOjyhwEray7cvMv7SQ81RcTAe5DtNa84kzU5pSXGC089rNh1ZBQ2LkGQbEvSgCesoBemqCf8zdg_DQK6XrWefoUTQTRfuwPVQD9vjMkgLOpuS8Q1VMvGSTLeHOKx6JOjefJXNvrgMEi9lcBigww-U6SYCMY2ooxP2P64xOIbbiuLOfMzj-51sZ08/s320/PMH_logo.png" alt="Logo" className="w-6" referrerPolicy="no-referrer" />
+           <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+              <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhh-i9gOjyhwEray7cvMv7SQ81RcTAe5DtNa84kzU5pSXGC089rNh1ZBQ2LkGQbEvSgCesoBemqCf8zdg_DQK6XrWefoUTQTRfuwPVQD9vjMkgLOpuS8Q1VMvGSTLeHOKx6JOjefJXNvrgMEi9lcBigww-U6SYCMY2ooxP2P64xOIbbiuLOfMzj-51sZ08/s320/PMH_logo.png" alt="Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
            </div>
-           <h1 className="text-2xl font-bold tracking-widest"><span className="font-light">MEDIPOS</span></h1>
+           <h1 className="tracking-wide"><span className="font-bold text-[27px] leading-[34px]">{companyName}</span></h1>
         </div>
         <div className="flex items-center gap-6 text-sm font-medium">
            <div className="flex items-center gap-2">
@@ -87,9 +145,39 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                <span className="text-[10px] text-green-400 uppercase tracking-widest">Online</span>
              </div>
            </div>
-           <div className="flex items-center gap-2 ml-2 sm:ml-4 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md">
-             <UserIcon size={16} />
-             <span>Not Logged In</span>
+           <div className="relative group flex items-center gap-2 ml-2 sm:ml-4 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md cursor-pointer hover:bg-white/20 transition-colors">
+             <HelpCircle size={16} />
+             <span>Help</span>
+             
+             {/* Floating Window (Popover) */}
+             <div className="absolute top-full right-0 mt-4 w-80 bg-[#1e1b4b] border border-white/20 rounded-2xl shadow-2xl p-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right z-50 text-white shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+               <h3 className="text-lg font-bold mb-3 border-b border-white/10 pb-2">About {companyName}</h3>
+               <div className="space-y-3 text-sm font-light">
+                 <p><span className="font-semibold text-pink-200">Location:</span> Main Street Medical District</p>
+                 <p><span className="font-semibold text-pink-200">Contact:</span> +92 302 683 4300</p>
+                 <p><span className="font-semibold text-pink-200">Timing:</span> Full Week (8:00 AM - 7:00 PM)</p>
+                 
+                 <div className="border-t border-white/10 pt-2 mt-2">
+                   <h4 className="font-semibold text-pink-200 mb-1">Legal Info</h4>
+                   <p className="text-xs opacity-80 leading-relaxed">By using this system, you agree to our Terms of Service (TORs) and Privacy Policy regarding patient data handling.</p>
+                 </div>
+                 
+                 <div className="border-t border-white/10 pt-3 mt-4 bg-black/20 -mx-6 -mb-6 p-6 rounded-b-2xl">
+                   <h4 className="text-xs font-bold uppercase tracking-wider text-white/50 mb-2">Developer</h4>
+                   <div className="space-y-1.5 text-xs">
+                     <a href="http://mediaplus1.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-pink-300 transition-colors">
+                       <span className="opacity-70">🔗</span> Mediaplus
+                     </a>
+                     <a href="https://wa.me/923036834300" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-pink-300 transition-colors">
+                       <span className="opacity-70">✆</span> +923036834300 (WhatsApp)
+                     </a>
+                     <a href="mailto:m.asif.anwar@gmail.com" className="flex items-center gap-2 hover:text-pink-300 transition-colors">
+                       <span className="opacity-70">✉</span> m.asif.anwar@gmail.com
+                     </a>
+                   </div>
+                 </div>
+               </div>
+             </div>
            </div>
         </div>
       </header>
@@ -107,39 +195,43 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
             <div className="flex items-center gap-3 mt-4 text-pink-100">
                  <CloudSun size={32} className="text-yellow-400 drop-shadow-md" />
-                 <span className="text-3xl font-semibold">12°</span>
-                 <span className="text-sm opacity-90 font-medium tracking-wide">Açık ve Güneşli</span>
+                 <span className="text-3xl font-semibold">{weather.temp !== null ? `${weather.temp}°` : '--°'}</span>
+                 <span className="text-sm opacity-90 font-medium tracking-wide">{weather.desc}</span>
             </div>
           </div>
 
           {/* Notifications */}
           <div className="flex-1 mt-6">
              <h3 className="text-xs font-bold uppercase tracking-[0.2em] opacity-70 mb-4 flex items-center gap-2 text-pink-100">
-               <Bell size={14}/> BİLDİRİMLER
+               <Bell size={14}/> NOTIFICATIONS
              </h3>
              <div className="space-y-3">
                
+               {latestStockEntry && (
+                 <div className="bg-white/10 hover:bg-white/15 border border-white/5 backdrop-blur-md p-4 rounded-2xl flex items-center gap-4 transition-colors cursor-default">
+                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center font-bold shadow-lg">S</div>
+                   <div className="flex flex-col">
+                     <span className="font-semibold text-sm">New Stock Received!</span>
+                     <span className="text-xs opacity-60">
+                       {new Date(latestStockEntry.date).toLocaleDateString()} {new Date(latestStockEntry.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                     </span>
+                   </div>
+                 </div>
+               )}
+
                <div className="bg-white/10 hover:bg-white/15 border border-white/5 backdrop-blur-md p-4 rounded-2xl flex items-center gap-4 transition-colors cursor-default">
-                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center font-bold shadow-lg">Y</div>
+                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center font-bold shadow-lg">N</div>
                  <div className="flex flex-col">
-                   <span className="font-semibold text-sm">Yeni sipariş var!</span>
+                   <span className="font-semibold text-sm">New order received!</span>
                    <span className="text-xs opacity-60">15:27</span>
                  </div>
                </div>
 
                <div className="bg-white/10 hover:bg-white/15 border border-white/5 backdrop-blur-md p-4 rounded-2xl flex items-center gap-4 transition-colors cursor-default">
-                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center font-bold shadow-lg">O</div>
+                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center font-bold shadow-lg">U</div>
                  <div className="flex flex-col">
-                   <span className="font-semibold text-sm">Yeni sipariş var!</span>
-                   <span className="text-xs opacity-60">14:56</span>
-                 </div>
-               </div>
-
-               <div className="bg-white/10 hover:bg-white/15 border border-white/5 backdrop-blur-md p-4 rounded-2xl flex items-center gap-4 transition-colors cursor-default">
-                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center font-bold shadow-lg">T</div>
-                 <div className="flex flex-col">
-                   <span className="font-semibold text-sm">Yeni sipariş var!</span>
-                   <span className="text-xs opacity-60">13:40</span>
+                   <span className="font-semibold text-sm">System update pending</span>
+                   <span className="text-xs opacity-60">09:00</span>
                  </div>
                </div>
 
@@ -148,11 +240,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
           {/* Footer info (Mobile & Desktop) */}
           <div className="mt-auto pt-8 flex justify-between items-end opacity-60 text-xs">
-             <div className="flex items-center gap-2 hover:opacity-100 transition-opacity cursor-pointer text-pink-100">
+             <a href="https://wa.me/923026834300" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-100 transition-opacity cursor-pointer text-pink-100">
                <Phone size={16} />
-               <span className="font-medium">Müşteri Hizmetleri</span>
-             </div>
-             <div className="text-pink-100">Medipos 1.0 Standart Edition</div>
+               <span className="font-medium">+923026834300</span>
+             </a>
+             <a href="http://mediaplus1.vercel.app" target="_blank" rel="noopener noreferrer" className="text-pink-100 hover:opacity-100 transition-opacity">Mediaplus</a>
           </div>
         </div>
 
