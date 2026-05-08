@@ -23,6 +23,7 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
   // --- INVENTORY / PRODUCTS STATE ---
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [search, setSearch] = useState('');
+  const [limit, setLimit] = useState(50);
   const [filter, setFilter] = useState<'all' | 'shortage' | 'expired' | 'nearExpiry'>('all');
   const [isFormModalOpen, setFormModalOpen] = useState(false);
   const [isBulkImportOpen, setBulkImportOpen] = useState(false);
@@ -81,28 +82,39 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
   };
 
   // --- PRODUCT LOGIC ---
-  const filteredMedicines = medicines.filter(m => {
-    const matchesSearch = 
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.genericName.toLowerCase().includes(search.toLowerCase());
-    
-    if (!matchesSearch) return false;
+  const filteredMedicines = React.useMemo(() => {
+    const s = search.toLowerCase().trim();
+    return medicines.filter(m => {
+      const matchesSearch = 
+        !s ||
+        m.name.toLowerCase().includes(s) ||
+        m.genericName.toLowerCase().includes(s) ||
+        (m.batchNumber && m.batchNumber.toLowerCase().includes(s)) ||
+        (m.rackNo && m.rackNo.toLowerCase().includes(s)) ||
+        (m.brandName && m.brandName.toLowerCase().includes(s));
+      
+      if (!matchesSearch) return false;
 
-    if (filter === 'shortage') {
-      return m.stock <= (m.minStock || LOW_STOCK_THRESHOLD) && m.stock > 0;
-    }
-    if (filter === 'expired') {
-      return new Date(m.expiryDate) < new Date();
-    }
-    if (filter === 'nearExpiry') {
-      const expiryDate = new Date(m.expiryDate);
-      const diffTime = expiryDate.getTime() - new Date().getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays <= EXPIRY_WARNING_DAYS && diffDays > 0;
-    }
+      if (filter === 'shortage') {
+        return m.stock <= (m.minStock || LOW_STOCK_THRESHOLD) && m.stock > 0;
+      }
+      if (filter === 'expired') {
+        return new Date(m.expiryDate) < new Date();
+      }
+      if (filter === 'nearExpiry') {
+        const expiryDate = new Date(m.expiryDate);
+        const diffTime = expiryDate.getTime() - new Date().getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= EXPIRY_WARNING_DAYS && diffDays > 0;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [medicines, search, filter]);
+
+  const pagedMedicines = React.useMemo(() => {
+    return filteredMedicines.slice(0, limit);
+  }, [filteredMedicines, limit]);
 
   const handleAddNewProduct = () => {
     setEditingMedicine(null);
@@ -155,7 +167,12 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
           salePrice: item.salePrice ? Number(item.salePrice) : existing.salePrice,
           category: item.category ? String(item.category).trim() : existing.category,
           batchNumber: item.batchNumber || existing.batchNumber,
-          expiryDate: item.expiryDate || existing.expiryDate
+          expiryDate: item.expiryDate || existing.expiryDate,
+          brandName: item.brandName || existing.brandName,
+          modelName: item.modelName || existing.modelName,
+          rackNo: item.rackNo || existing.rackNo,
+          minStock: item.minStock !== undefined ? Number(item.minStock) : existing.minStock,
+          genericName: item.genericName || existing.genericName
         };
       } else {
         // Create new
@@ -176,6 +193,8 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
             if (normalized === 'inj') return 'Injection';
             if (normalized === 'vial') return 'Vial';
             if (normalized === 'amp' || normalized === 'ampoule') return 'Ampoule';
+            if (normalized === 'inh' || normalized === 'inhaler') return 'Inhaler';
+            if (normalized === 'tub' || normalized === 'tube' || normalized === 'cream') return 'Tube';
           }
           return fallback;
         };
@@ -185,6 +204,10 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
           name: item.name || 'Unnamed',
           genericName: item.genericName || '',
           category: item.category ? String(item.category).trim() : 'General',
+          brandName: item.brandName || '',
+          modelName: item.modelName || '',
+          rackNo: item.rackNo || '',
+          minStock: Number(item.minStock) || 10,
           unit: findMatch(item.unit as string, UNITS, 'Box') as any,
           purchasePrice: Number(item.purchasePrice) || 0,
           salePrice: Number(item.salePrice) || 0,
@@ -232,7 +255,7 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ height: '448px', marginTop: '-20px' }}>
+    <div className="h-full flex flex-col pt-2" style={{ marginTop: '-20px' }}>
       {/* Tab Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <div>
@@ -385,14 +408,14 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {filteredMedicines.length === 0 && (
+                      {pagedMedicines.length === 0 && (
                         <tr>
                           <td colSpan={14} className="py-20 text-center text-gray-400">
                             No medicines found matching your search.
                           </td>
                         </tr>
                       )}
-                      {filteredMedicines.map(med => {
+                      {pagedMedicines.map(med => {
                         const isExpired = new Date(med.expiryDate) < new Date();
                         return (
                           <tr 
@@ -473,40 +496,56 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
                       })}
                     </tbody>
                   </table>
+                  {filteredMedicines.length > limit && (
+                    <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-center">
+                      <Button variant="outline" size="sm" onClick={() => setLimit(prev => prev + 50)}>
+                        Load More Medicines (+50)
+                      </Button>
+                    </div>
+                  )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredMedicines.length === 0 && (
-                  <div className="col-span-full py-20 text-center text-gray-400">
-                    No medicines found matching your search.
+              <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {pagedMedicines.length === 0 && (
+                    <div className="col-span-full py-20 text-center text-gray-400">
+                      No medicines found matching your search.
+                    </div>
+                  )}
+                  {pagedMedicines.map(med => (
+                    <div key={med.id} onClick={() => { if(user.permissions.stock) setStockModalMed(med); }} className="cursor-pointer">
+                      <MedicineCard 
+                        medicine={med}
+                        inventoryMode={true}
+                        actionSlot={
+                          <div className="flex items-center gap-1">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleEditProduct(med); }} 
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors ring-1 ring-blue-100"
+                              title="Edit"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleDeleteProduct(med.id); }} 
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors ring-1 ring-red-100"
+                              title="Delete"
+                            >
+                              <Trash size={16} />
+                            </button>
+                          </div>
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+                {filteredMedicines.length > limit && (
+                  <div className="flex justify-center pb-10">
+                    <Button variant="outline" onClick={() => setLimit(prev => prev + 50)}>
+                      Load More Medicines (+50)
+                    </Button>
                   </div>
                 )}
-                {filteredMedicines.map(med => (
-                  <div key={med.id} onClick={() => { if(user.permissions.stock) setStockModalMed(med); }} className="cursor-pointer">
-                    <MedicineCard 
-                      medicine={med}
-                      inventoryMode={true}
-                      actionSlot={
-                        <div className="flex items-center gap-1">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleEditProduct(med); }} 
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors ring-1 ring-blue-100"
-                            title="Edit"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleDeleteProduct(med.id); }} 
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors ring-1 ring-red-100"
-                            title="Delete"
-                          >
-                            <Trash size={16} />
-                          </button>
-                        </div>
-                      }
-                    />
-                  </div>
-                ))}
               </div>
             )}
           </div>
