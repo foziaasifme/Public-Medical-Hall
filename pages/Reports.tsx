@@ -3,7 +3,7 @@ import { storageService } from '../services/storageService';
 import { Sale, Medicine, Patient, PatientReport, LabTestRecord } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { formatCurrency, LOW_STOCK_THRESHOLD } from '../constants';
-import { Calendar, Filter, ChevronRight, Clock, FileText, Search, User, Phone, Trash2, Edit2, ChevronDown, X } from 'lucide-react';
+import { Calendar, Filter, ChevronRight, Clock, FileText, Search, User, Phone, Trash2, Edit2, ChevronDown, X, List, PlusCircle, Rocket, Star, Package, TrendingUp, Wallet, ShoppingBag } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { clsx } from 'clsx';
 import { LabReportModal } from '../components/LabReportModal';
@@ -12,6 +12,45 @@ import { useDialog } from '../DialogContext';
 import { motion, AnimatePresence } from 'motion/react';
 
 type FilterType = 'daily' | 'weekly' | 'monthly' | 'custom';
+
+const ReportSections = [
+  {
+    title: 'Sales Invoice',
+    items: [
+      { id: 'sales_log', name: 'Manage Sales Invoice', icon: List, shortcut: 'ctrl + Q', color: 'text-purple-600' },
+      { id: 'credit_sales', name: 'Receiving Reports', icon: FileText, shortcut: '', color: 'text-blue-600' },
+    ]
+  },
+  {
+    title: 'Purchase Orders/ Invoices',
+    items: [
+      { id: 'purchase_history', name: 'Purchase Invoices', icon: List, shortcut: 'ctrl + I', color: 'text-purple-600' },
+      { id: 'supplier_reports', name: 'Manage Suppliers', icon: List, shortcut: '', color: 'text-purple-600', disabled: true },
+    ]
+  },
+  {
+    title: 'Customers',
+    items: [
+      { id: 'patient_records', name: 'Manage Customers', icon: List, shortcut: 'ctrl + C', color: 'text-amber-800' },
+      { id: 'assign_area', name: 'Assign Area', icon: Star, shortcut: '', color: 'text-blue-500', disabled: true },
+    ]
+  },
+  {
+    title: 'Booking Sheet',
+    items: [
+      { id: 'quick_booking', name: 'Quick Booking Sheet', icon: Rocket, shortcut: 'ctrl + B', color: 'text-rose-600', disabled: true },
+      { id: 'gen_booking', name: 'Generate Booking Sheet', icon: PlusCircle, shortcut: '', color: 'text-green-600', disabled: true },
+    ]
+  },
+  {
+    title: 'Products',
+    items: [
+      { id: 'low_stock', name: 'Low Stock Alerts', icon: FileText, shortcut: 'ctrl + P', color: 'text-green-600' },
+      { id: 'inventory_valuation', name: 'Inventory Valuation', icon: List, shortcut: '', color: 'text-blue-600' },
+      { id: 'profit_margin', name: 'Profit Margin Analysis', icon: TrendingUp, shortcut: '', color: 'text-purple-600' },
+    ]
+  }
+];
 
 const Reports: React.FC = () => {
   const { showAlert, showConfirm, showPrompt } = useDialog();
@@ -351,252 +390,115 @@ const Reports: React.FC = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto pb-10 flex flex-col">
-       
-       {/* Header & Controls */}
-       <div className="mb-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-         <div>
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              {activeTab === null ? (
-                 <><FileText className="text-medical-blue" /> Report Center</>
-              ) : (
-                 <button onClick={() => setActiveTab(null)} className="flex items-center gap-2 hover:text-medical-blue transition-colors text-gray-500 font-bold text-sm uppercase tracking-wider">
-                    <ChevronRight className="rotate-180" size={18} /> Back to Report Hub
-                 </button>
-              )}
-            </h2>
+    <div className="h-full overflow-y-auto pb-10 flex flex-col bg-gray-50/30">
+      
+      {/* Top Breadcrumb Header Style */}
+      <div className="px-6 py-4 border-b border-gray-100 bg-white flex justify-between items-center mb-6">
+         <div className="flex items-center gap-4">
             {activeTab !== null && (
-               <div className="mt-4">
-                 <h3 className="text-2xl font-black text-gray-900 capitalize px-2">{activeTab.replace('_', ' ')}</h3>
+              <button onClick={() => setActiveTab(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 mr-2">
+                 <ChevronRight className="rotate-180" size={20} />
+              </button>
+            )}
+            <h1 className={clsx("font-bold text-gray-800 tracking-tight", activeTab === null ? "text-3xl" : "text-2xl")}>
+              {activeTab === null ? 'Home' : ReportSections.flatMap(s => s.items).find(i => i.id === activeTab)?.name || 'Report'}
+            </h1>
+            {activeTab === null && <span className="text-sm text-gray-400 translate-y-1">(We want more)</span>}
+         </div>
+
+         <div className="flex items-center gap-4">
+           {activeTab !== null && (
+             <>
+               <div className="relative">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                 <input 
+                   type="text" 
+                   placeholder="Search..."
+                   className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50"
+                   value={searchQuery}
+                   onChange={(e) => setSearchQuery(e.target.value)}
+                 />
                </div>
-            )}
+               
+               {(activeTab === 'sales_log' || activeTab === 'purchase_history') && (
+                 <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                   {(['daily', 'weekly', 'monthly'] as const).map((t) => (
+                     <button
+                       key={t}
+                       onClick={() => setFilterType(t)}
+                       className={clsx(
+                         "px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all",
+                         filterType === t 
+                           ? "bg-white text-medical-blue shadow-sm" 
+                           : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                       )}
+                     >
+                       {t === 'daily' ? 'Today' : t}
+                     </button>
+                   ))}
+                   <button
+                     onClick={() => setFilterType('custom')}
+                     className={clsx(
+                       "px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all",
+                       filterType === 'custom' 
+                         ? "bg-white text-medical-blue shadow-sm" 
+                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                     )}
+                   >
+                     Date
+                   </button>
+                 </div>
+               )}
+
+               {filterType === 'custom' && (activeTab === 'sales_log' || activeTab === 'purchase_history') && (
+                 <input 
+                   type="date" 
+                   value={customDate}
+                   onChange={(e) => setCustomDate(e.target.value)}
+                   className="text-sm font-bold text-gray-700 bg-white border border-gray-200 px-3 py-2 rounded-lg outline-none cursor-pointer"
+                 />
+               )}
+             </>
+           )}
+           {activeTab === null && <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">index</div>}
          </div>
+      </div>
 
-         {activeTab !== null && (
-         <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder={activeTab === 'profit_margin' ? "Search Product..." : activeTab === 'inventory_valuation' ? "Search..." : "Search..."}
-                className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-1 focus:ring-blue-500"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            
-            {(activeTab === 'sales_log' || activeTab === 'purchase_history') && (
-              <>
-                <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                  {(['daily', 'weekly', 'monthly'] as const).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setFilterType(t)}
-                      className={clsx(
-                        "px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all",
-                        filterType === t 
-                          ? "bg-white text-medical-blue shadow-sm" 
-                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                      )}
-                    >
-                      {t === 'daily' ? 'Today' : t}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setFilterType('custom')}
-                    className={clsx(
-                      "px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all",
-                      filterType === 'custom' 
-                        ? "bg-white text-medical-blue shadow-sm" 
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                    )}
-                  >
-                    Date Wise
-                  </button>
-                </div>
-
-                {filterType === 'custom' && (
-                  <div className="flex items-center gap-2 px-2 border-l border-gray-200">
-                    <Calendar size={16} className="text-gray-400" />
-                    <input 
-                      type="date" 
-                      value={customDate}
-                      onChange={(e) => setCustomDate(e.target.value)}
-                      className="text-sm font-bold text-gray-700 bg-transparent outline-none cursor-pointer"
-                    />
+      {activeTab === null && (
+        <div className="px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+             {ReportSections.map(section => (
+               <div key={section.title} className="bg-white rounded border border-gray-200 overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex flex-col">
+                  <div className="bg-[#f0f7ff] px-4 py-2 border-b border-gray-100">
+                     <h3 className="text-[#3b82f6] font-bold text-base">{section.title}</h3>
                   </div>
-                )}
-              </>
-            )}
-
-            {(activeTab === 'patient_records' || activeTab === 'profit_margin') && (
-              <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200 ml-auto">
-                <span className="text-xs font-bold text-gray-500 px-2">FROM</span>
-                <input 
-                  type="date" 
-                  value={fromDate} 
-                  onChange={e => setFromDate(e.target.value)} 
-                  className="text-sm font-bold text-gray-700 bg-transparent outline-none cursor-pointer" 
-                />
-                <span className="text-xs font-bold text-gray-500 px-2">TO</span>
-                <input 
-                  type="date" 
-                  value={toDate} 
-                  onChange={e => setToDate(e.target.value)} 
-                  className="text-sm font-bold text-gray-700 bg-transparent outline-none cursor-pointer" 
-                />
-              </div>
-            )}
-         </div>
-         )}
-       </div>
-
-       {activeTab === null && (
-         <div className="space-y-10 animate-in fade-in duration-500">
-           {[
-             {
-               title: '1. Inventory & Stock Reports',
-               id: 'inventory',
-               reports: [
-                 {
-                   id: 'low_stock',
-                   name: 'Low Stock Alerts',
-                   desc: 'Identifies inventory items currently at or below the minimum required stock threshold.',
-                   fields: ['SKU/ID', 'Medicine Name', 'Current Stock', 'Threshold Level'],
-                   insight: `${lowStockCount} items critically low on stock.`
-                 },
-                 {
-                    id: 'inventory_valuation',
-                    name: 'Inventory Valuation',
-                    desc: 'Calculates the total financial value of all current stock based on purchase and sale prices.',
-                    fields: ['Product Name', 'Current Stock', 'Purchase Value', 'Potential Revenue'],
-                    insight: `Total Stock Value: ${formatCurrency(medicines.reduce((acc, m) => acc + (m.purchasePrice * m.stock), 0))}`
-                 }
-               ]
-             },
-             {
-               title: '2. Sales & Revenue Reports',
-               id: 'sales',
-               reports: [
-                 {
-                   id: 'sales_log',
-                   name: 'Detailed Sales Log',
-                   desc: 'Chronological tracking of all point-of-sale transactions and revenues.',
-                   fields: ['Date/Time', 'Patient', 'Payment Method', 'Items Sold', 'Total Amount'],
-                   insight: `${filteredSales.length} transactions processed in selected period.`
-                 }
-               ]
-             },
-             {
-               title: '3. Purchase & Supplier Reports',
-               id: 'purchases',
-               reports: [
-                 {
-                   id: 'purchase_history',
-                   name: 'Purchase History',
-                   desc: 'Historical record of stock intake and associated purchase costs.',
-                   fields: ['Date', 'Medicine Name', 'Batch', 'Quantity', 'Unit Cost', 'Total Cost'],
-                   insight: `${stockEntries.filter(s => s.type === 'IN').length} total restock entries.`
-                 }
-               ]
-             },
-             {
-               title: '4. Financial & Tax Reports',
-               id: 'financial',
-               reports: [
-                 {
-                   id: 'profit_margin',
-                   name: 'Profit Margin Analysis',
-                   desc: 'Comparative view of purchase versus retail pricing to highlight profitability per SKU.',
-                   fields: ['Product Name', 'Purchase Price', 'Sale Price', 'Profit Per Unit', 'Margin %'],
-                   insight: `Average profit margin tracked across ${medicines.length} items.`
-                 },
-                 {
-                   id: 'credit_sales',
-                   name: 'Outstanding Credit & Receivables',
-                   desc: 'Overview of all unpaid credit invoices requiring collection.',
-                   fields: ['Date', 'Customer Name', 'Phone', 'Items', 'Amount Due'],
-                   insight: `Total Outstanding Receivables: ${formatCurrency(totalCredit)}.`
-                 }
-               ]
-             },
-             {
-               title: '5. Compliance & Audit Reports',
-               id: 'compliance',
-               reports: [
-                 {
-                   id: 'patient_records',
-                   name: 'Patient Audit Records',
-                   desc: 'Comprehensive audit logs of patient dispensations, diagnostics, and clinical notes.',
-                   fields: ['Patient ID', 'Name', 'Age/Sex', 'Contact', 'Clinical History'],
-                   insight: `${patients.length} patient records maintained securely.`,
-                   requires: 'showPatients'
-                 }
-               ]
-             }
-           ].map(category => {
-              // Check permissions
-              const validReports = category.reports.filter(r => {
-                 if ((r as any).requires === 'showPatients' && appFeatures?.showPatients !== true) return false;
-                 return true;
-              });
-
-              if (validReports.length === 0) return null;
-
-              return (
-                <div key={category.id} className="bg-white rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm transition-all overflow-hidden">
-                  <button 
-                    onClick={() => setExpandedCategories(prev => ({...prev, [category.id]: !prev[category.id]}))}
-                    className={clsx("w-full flex items-center justify-between text-left focus:outline-none transition-all", expandedCategories[category.id] ? "mb-6 pb-4 border-b border-gray-100" : "")}
-                  >
-                    <h3 className="text-xl font-black text-gray-900 tracking-tight">{category.title}</h3>
-                    <div className={clsx("p-2 rounded-full transition-colors", expandedCategories[category.id] ? "bg-medical-blue/10 text-medical-blue" : "bg-gray-50 text-gray-400 hover:bg-gray-100")}>
-                       <ChevronDown size={20} className={clsx("transition-transform duration-300", expandedCategories[category.id] && "rotate-180")} />
-                    </div>
-                  </button>
-                  
-                  <AnimatePresence initial={false}>
-                    {expandedCategories[category.id] && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                          {validReports.map(report => (
-                             <div 
-                               key={report.id} 
-                               onClick={() => setActiveTab(report.id)}
-                               className="group cursor-pointer bg-gray-50 hover:bg-blue-50/50 p-6 rounded-2xl border border-gray-100 hover:border-blue-200 transition-all text-left flex flex-col justify-between"
-                             >
-                               <div>
-                                  <h4 className="text-lg font-bold text-gray-800 group-hover:text-blue-700 transition-colors mb-2">{report.name}</h4>
-                                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">{report.desc}</p>
-                                  
-                                  <div className="bg-white p-4 rounded-xl border border-gray-100 mb-4">
-                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Key Data Fields</p>
-                                     <ul className="text-xs text-gray-600 space-y-1.5 list-disc list-inside">
-                                       {report.fields.map(f => <li key={f}>{f}</li>)}
-                                     </ul>
-                                  </div>
-                               </div>
-                               <div className="flex justify-between items-center bg-gray-100/80 group-hover:bg-blue-100/50 p-3 rounded-xl transition-colors">
-                                  <span className="text-xs font-bold text-gray-500 group-hover:text-blue-600">{report.insight}</span>
-                                  <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-600" />
-                               </div>
-                             </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-           })}
-         </div>
-       )}
+                  <div className="p-3 space-y-1 flex-1">
+                     {section.items.map(item => (
+                       <div 
+                         key={item.id} 
+                         onClick={() => !item.disabled && setActiveTab(item.id)}
+                         className={clsx(
+                           "flex items-center gap-3 p-2 rounded transition-colors group relative",
+                           item.disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50 cursor-pointer"
+                         )}
+                       >
+                          <div className={clsx("p-1", item.color)}>
+                             <item.icon size={18} strokeWidth={2.5} />
+                          </div>
+                          <div className="flex-1 text-[13px] font-medium text-[#2563eb] group-hover:text-blue-800">{item.name}</div>
+                          {item.shortcut && (
+                             <span className="text-[10px] text-red-500 font-bold tracking-tight bg-red-50 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                               {item.shortcut}
+                             </span>
+                          )}
+                       </div>
+                     ))}
+                  </div>
+               </div>
+             ))}
+          </div>
+        </div>
+      )}
 
        {activeTab === 'sales_log' && (
          <>
