@@ -66,7 +66,6 @@ const App: React.FC = () => {
   const [showDeveloperPortal, setShowDeveloperPortal] = useState(false);
   const [showDevPinModal, setShowDevPinModal] = useState(false);
   const [showPrescriptionScanner, setShowPrescriptionScanner] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
   const [companyName, setCompanyName] = useState('Public Medical Hall');
 
   // Offline Mode State
@@ -139,13 +138,6 @@ const App: React.FC = () => {
       loadSettings();
     }
   }, [isAuthReady]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -255,30 +247,6 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#F0F2F5] overflow-y-auto">
         <DoctorProfile standalone />
-      </div>
-    );
-  }
-
-  if (showSplash) {
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-8">
-          <img 
-            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhh-i9gOjyhwEray7cvMv7SQ81RcTAe5DtNa84kzU5pSXGC089rNh1ZBQ2LkGQbEvSgCesoBemqCf8zdg_DQK6XrWefoUTQTRfuwPVQD9vjMkgLOpuS8Q1VMvGSTLeHOKx6JOjefJXNvrgMEi9lcBigww-U6SYCMY2ooxP2P64xOIbbiuLOfMzj-51sZ08/s320/PMH_logo.png" 
-            alt="Logo" 
-            className="w-40 h-40" 
-            referrerPolicy="no-referrer"
-          />
-          <div className="text-center space-y-3">
-            <h1 className="text-lg font-medium text-gray-600 tracking-wide">
-              Pharmacy system starting up
-              <span className="animate-pulse">...</span>
-            </h1>
-            <div className="w-56 h-1 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-600 animate-pulse w-full"></div>
-            </div>
-          </div>
-        </div>
       </div>
     );
   }
