@@ -138,10 +138,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       {/* Header */}
       <header className="flex justify-between items-center p-6 lg:px-12 relative z-50 w-full">
         <div className="flex items-center gap-3">
-           <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+           <div className="w-16 h-16 md:w-10 md:h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
               <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhh-i9gOjyhwEray7cvMv7SQ81RcTAe5DtNa84kzU5pSXGC089rNh1ZBQ2LkGQbEvSgCesoBemqCf8zdg_DQK6XrWefoUTQTRfuwPVQD9vjMkgLOpuS8Q1VMvGSTLeHOKx6JOjefJXNvrgMEi9lcBigww-U6SYCMY2ooxP2P64xOIbbiuLOfMzj-51sZ08/s320/PMH_logo.png" alt="Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
            </div>
-           <h1 className="tracking-wide"><span className="font-bold text-[27px] leading-[34px]">{companyName}</span></h1>
+           <h1 className="tracking-wide hidden md:block"><span className="font-bold text-[27px] leading-[34px]">{companyName}</span></h1>
         </div>
         <div className="flex items-center gap-6 text-sm font-medium">
            <div className="flex items-center gap-2">
@@ -263,12 +263,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
              </div>
           </div>
-
-          {/* Footer info (Mobile & Desktop) */}
-          <div className="mt-auto pt-8 flex justify-between items-end opacity-60 text-xs">
-             <div></div>
-             <a href="http://mediaplus1.vercel.app" target="_blank" rel="noopener noreferrer" className="text-pink-100 hover:opacity-100 transition-opacity">Mediaplus POS 1.2.0 Standard Edition</a>
-          </div>
         </div>
 
         {/* Right Column - Login Overlay */}
@@ -328,6 +322,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <div className="mt-8 text-center space-y-1">
                  <p className="text-xs text-white/40">Default Admin: admin / 1234</p>
                  <p className="text-xs text-white/40">Default Staff: staff / staff</p>
+                 <div className="pt-4 border-t border-white/5 mt-4">
+                   <a href="http://mediaplus1.vercel.app" target="_blank" rel="noopener noreferrer" className="opacity-40 hover:opacity-100 transition-opacity text-[10px] uppercase font-bold tracking-widest text-pink-100">
+                     Mediaplus POS 1.2.0 Standard Edition
+                   </a>
+                 </div>
               </div>
            </div>
         </div>
