@@ -1,0 +1,10 @@
+{
+  "name": "Public Medical Hall",
+  "description": "Premium pharmacy management system for renal care medications with integrated clinical tools, inventory tracking, and lab reporting.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "C7": [],
+  "aq": [],
+  "majorCapabilities": []
+}

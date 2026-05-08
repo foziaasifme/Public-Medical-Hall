@@ -1,0 +1,168 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ---------------------------------------------------------
+    // 1. GLOBAL SAFETY NET
+    // ---------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------
+    // 2. GLOBAL HELPERS
+    // ---------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'anonymous');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // RBAC: Check if user is admin (bootstrap with owner email or lookup in users)
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'fozia.asif.me@gmail.com' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    // ---------------------------------------------------------
+    // 3. ENTITY VALIDATIONS
+    // ---------------------------------------------------------
+
+    function isValidMedicine(data) {
+      return data.keys().hasAll(['id', 'name', 'purchasePrice', 'salePrice', 'stock', 'expiryDate', 'batchNumber', 'unit']) &&
+             data.id is string && isValidId(data.id) &&
+             data.name is string && data.name.size() > 0 &&
+             data.purchasePrice is number && data.purchasePrice >= 0 &&
+             data.salePrice is number && data.salePrice >= 0 &&
+             data.stock is number && data.stock >= 0 &&
+             data.expiryDate is string &&
+             data.batchNumber is string &&
+             data.unit in ['Tablet', 'Strip', 'Bottle', 'Box', 'Injection', 'Inhaler', 'Tube'];
+    }
+
+    function isValidSale(data) {
+      return data.keys().hasAll(['id', 'date', 'items', 'total', 'staffName', 'paymentMethod']) &&
+             data.id is string && isValidId(data.id) &&
+             data.items is list && data.items.size() > 0 &&
+             data.total is number && data.total >= 0 &&
+             data.staffName is string &&
+             data.paymentMethod in ['Cash', 'Credit'];
+    }
+
+    function isValidStockEntry(data) {
+      return data.keys().hasAll(['id', 'date', 'medicineId', 'medicineName', 'quantity', 'type', 'reason']) &&
+             data.id is string && isValidId(data.id) &&
+             data.medicineId is string && isValidId(data.medicineId) &&
+             data.quantity is number && data.quantity >= 0 &&
+             data.type in ['IN', 'OUT'];
+    }
+
+    function isValidPatient(data) {
+      return data.keys().hasAll(['id', 'name', 'phone', 'isActive']) &&
+             data.id is string && isValidId(data.id) &&
+             data.name is string && data.name.size() > 0 &&
+             data.phone is string && data.phone.size() > 0 &&
+             data.isActive is bool;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['username', 'role', 'permissions']) &&
+             data.username is string && data.username.size() > 0 &&
+             data.role in ['admin', 'staff'] &&
+             data.permissions is map;
+    }
+
+    // ---------------------------------------------------------
+    // 4. COLLECTION MATCHES
+    // ---------------------------------------------------------
+
+    // MEDICINES
+    match /medicines/{medicineId} {
+      allow get: if isVerified();
+      allow list: if isVerified();
+      allow create: if isVerified() && isValidMedicine(incoming()) && isValidId(medicineId);
+      allow update: if isVerified() && isValidMedicine(incoming()) && (
+        isAdmin() ||
+        incoming().diff(existing()).affectedKeys().hasOnly(['stock', 'batchNumber', 'expiryDate'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    // SALES
+    match /sales/{saleId} {
+      allow get, list: if isVerified();
+      allow create: if isVerified() && isValidSale(incoming()) && isValidId(saleId);
+      allow update: if isAdmin() && isValidSale(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // STOCK ENTRIES
+    match /stockEntries/{entryId} {
+      allow get, list: if isVerified();
+      allow create: if isVerified() && isValidStockEntry(incoming()) && isValidId(entryId);
+      allow delete: if isAdmin();
+    }
+
+    // PATIENTS
+    match /patients/{patientId} {
+      allow get, list: if isVerified();
+      allow create: if isVerified() && isValidPatient(incoming()) && isValidId(patientId);
+      allow update: if isVerified() && isValidPatient(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // PATIENT REPORTS
+    match /patientReports/{reportId} {
+      allow get, list: if isVerified();
+      allow create: if isVerified() && isValidId(reportId);
+      allow update: if isVerified();
+      allow delete: if isAdmin();
+    }
+
+    // LAB TESTS
+    match /labTests/{testId} {
+      allow get, list: if isVerified();
+      allow create: if isVerified() && isValidId(testId);
+      allow update: if isVerified();
+      allow delete: if isAdmin();
+    }
+
+    // SUPPLIERS
+    match /suppliers/{supplierId} {
+      allow get, list: if isVerified();
+      allow create: if isVerified() && isValidId(supplierId);
+      allow update: if isVerified();
+      allow delete: if isAdmin();
+    }
+
+    // USERS
+    match /users/{userId} {
+      allow get: if isVerified() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isAdmin() && isValidUser(incoming());
+      allow update: if isAdmin() && isValidUser(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // SETTINGS
+    match /settings/company {
+      allow get: if isVerified();
+      allow write: if isAdmin();
+    }
+  }
+}

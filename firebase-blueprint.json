@@ -1,0 +1,224 @@
+{
+  "entities": {
+    "Medicine": {
+      "title": "Medicine",
+      "description": "A medicine product in the pharmacy inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "genericName": { "type": "string" },
+        "category": { "type": "string" },
+        "purchasePrice": { "type": "number" },
+        "salePrice": { "type": "number" },
+        "stock": { "type": "number" },
+        "expiryDate": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "unit": { "type": "string", "enum": ["Tablet", "Strip", "Bottle", "Box", "Injection", "Inhaler", "Tube"] }
+      },
+      "required": ["id", "name", "purchasePrice", "salePrice", "stock", "expiryDate", "batchNumber", "unit"]
+    },
+    "CartItem": {
+      "title": "CartItem",
+      "description": "An item in a sale cart",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "quantity": { "type": "number" },
+        "saleUnit": { "type": "string" },
+        "salePrice": { "type": "number" },
+        "skuDeduction": { "type": "number" }
+      },
+      "required": ["id", "name", "quantity", "saleUnit", "salePrice", "skuDeduction"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "A record of a sale transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "CartItem" } },
+        "total": { "type": "number" },
+        "subTotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "tax": { "type": "number" },
+        "taxRate": { "type": "number" },
+        "staffName": { "type": "string" },
+        "paymentMethod": { "type": "string", "enum": ["Cash", "Credit"] },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerId": { "type": "string" }
+      },
+      "required": ["id", "date", "items", "total", "staffName", "paymentMethod"]
+    },
+    "StockEntry": {
+      "title": "StockEntry",
+      "description": "A record of stock movement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "medicineId": { "type": "string" },
+        "medicineName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "type": { "type": "string", "enum": ["IN", "OUT"] },
+        "reason": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "supplier": { "type": "string" },
+        "purchasePrice": { "type": "number" }
+      },
+      "required": ["id", "date", "medicineId", "medicineName", "quantity", "type", "reason"]
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "A patient record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "age": { "type": "string" },
+        "gender": { "type": "string", "enum": ["Male", "Female", "Other"] },
+        "referredBy": { "type": "string" },
+        "visitPurpose": { "type": "string" },
+        "history": { "type": "array", "items": { "type": "string" } },
+        "isActive": { "type": "boolean" },
+        "registeredAt": { "type": "string" }
+      },
+      "required": ["id", "name", "phone", "isActive"]
+    },
+    "PatientReport": {
+      "title": "PatientReport",
+      "description": "A clinical report for a patient",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "date": { "type": "string" },
+        "details": { "type": "string" }
+      },
+      "required": ["id", "patientId", "patientName", "date", "details"]
+    },
+    "LabTestRecord": {
+      "title": "LabTestRecord",
+      "description": "A laboratory test result",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "date": { "type": "string" },
+        "testType": { "type": "string" },
+        "category": { "type": "string" },
+        "resultValue": { "type": "string" },
+        "unit": { "type": "string" },
+        "normalRange": { "type": "string" },
+        "notes": { "type": "string" },
+        "reportingDate": { "type": "string" }
+      },
+      "required": ["id", "patientId", "patientName", "date", "testType", "resultValue", "unit", "normalRange"]
+    },
+    "Supplier": {
+      "title": "Supplier",
+      "description": "A medicine supplier",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "contact": { "type": "string" },
+        "email": { "type": "string" },
+        "medicinesSupplied": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["id", "name", "contact"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A system user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "staff"] },
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "inventory": { "type": "boolean" },
+            "stock": { "type": "boolean" },
+            "suppliers": { "type": "boolean" },
+            "settings": { "type": "boolean" },
+            "dashboard": { "type": "boolean" },
+            "patients": { "type": "boolean" },
+            "labTest": { "type": "boolean" },
+            "counter": { "type": "boolean" },
+            "reports": { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["username", "role", "permissions"]
+    },
+    "CompanySettings": {
+      "title": "CompanySettings",
+      "description": "Company configuration settings",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "license": { "type": "string" },
+        "address": { "type": "string" },
+        "contact": { "type": "string" },
+        "doctorName": { "type": "string" },
+        "doctorDegree": { "type": "string" },
+        "contactPersonName": { "type": "string" },
+        "mobileNo": { "type": "string" },
+        "whatsappNo": { "type": "string" },
+        "backupFrequency": { "type": "string", "enum": ["daily", "weekly", "monthly"] },
+        "defaultDiscount": { "type": "number" },
+        "saleRate": { "type": "number" },
+        "taxRate": { "type": "number" }
+      },
+      "required": ["name"]
+    }
+  },
+  "firestore": {
+    "/medicines/{medicineId}": {
+      "schema": { "$ref": "Medicine" },
+      "description": "Inventory of medicines"
+    },
+    "/sales/{saleId}": {
+      "schema": { "$ref": "Sale" },
+      "description": "Sales transactions"
+    },
+    "/stockEntries/{entryId}": {
+      "schema": { "$ref": "StockEntry" },
+      "description": "Stock movement logs"
+    },
+    "/patients/{patientId}": {
+      "schema": { "$ref": "Patient" },
+      "description": "Patient records"
+    },
+    "/patientReports/{reportId}": {
+      "schema": { "$ref": "PatientReport" },
+      "description": "Clinical reports for patients"
+    },
+    "/labTests/{testId}": {
+      "schema": { "$ref": "LabTestRecord" },
+      "description": "Laboratory test results"
+    },
+    "/suppliers/{supplierId}": {
+      "schema": { "$ref": "Supplier" },
+      "description": "Supplier records"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "System users"
+    },
+    "/settings/company": {
+      "schema": { "$ref": "CompanySettings" },
+      "description": "Company configuration settings"
+    }
+  }
+}
