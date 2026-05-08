@@ -38,6 +38,7 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
   const [reason, setReason] = useState('New Batch');
   const [batch, setBatch] = useState('');
   const [stockHistoryFilter, setStockHistoryFilter] = useState<'today' | 'all'>('all');
+  const [stockHistoryLimit, setStockHistoryLimit] = useState(50);
   const [stockMedSearch, setStockMedSearch] = useState('');
   const [stockPurchasePrice, setStockPurchasePrice] = useState(0);
 
@@ -224,6 +225,22 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
   };
 
   // --- STOCK LOGIC ---
+  const filteredStockEntries = React.useMemo(() => {
+    return stockEntries.filter(e => {
+      const matchesSearch = !stockMedSearch || e.medicineName.toLowerCase().includes(stockMedSearch.toLowerCase());
+      if (!matchesSearch) return false;
+
+      if (stockHistoryFilter === 'today') {
+        return new Date(e.date).toDateString() === new Date().toDateString();
+      }
+      return true;
+    });
+  }, [stockEntries, stockHistoryFilter, stockMedSearch]);
+
+  const pagedStockEntries = React.useMemo(() => {
+    return filteredStockEntries.slice(0, stockHistoryLimit);
+  }, [filteredStockEntries, stockHistoryLimit]);
+
   const handleStockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMedId || quantity <= 0) return;
@@ -717,6 +734,9 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
              <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                <h3 className="font-semibold text-gray-700">Recent Movements</h3>
                <div className="flex bg-white border border-gray-200 p-1 rounded-lg shadow-sm">
+                 <div className="px-3 py-1 text-[10px] font-bold text-blue-600 border-r border-gray-100 mr-1">
+                   {filteredStockEntries.length} Records
+                 </div>
                  <button 
                    onClick={() => setStockHistoryFilter('all')}
                    className={clsx(
@@ -738,12 +758,15 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
                </div>
              </div>
              <div className="overflow-auto flex-1 pb-10">
+               <div className="p-4 bg-gray-50 flex justify-center border-b border-gray-100">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Showing {pagedStockEntries.length} of {filteredStockEntries.length} Records</span>
+               </div>
                <table className="w-full text-left min-w-[600px]">
                  <thead className="bg-white sticky top-0">
                    <tr className="text-xs font-bold text-gray-400 uppercase border-b border-gray-100">
                      <th className="p-4">Date</th>
                      <th className="p-4">Type</th>
-                     <th className="p-4">Medicine</th>
+                     <th className="px-4 py-3 text-left">Medicine Info</th>
                      <th className="p-4 text-center">Qty</th>
                      <th className="p-4">Reason / Batch</th>
                    </tr>
@@ -765,35 +788,53 @@ const Inventory: React.FC<InventoryProps> = ({ user }) => {
                         return true;
                       })
                       .map(entry => (
-                      <tr key={entry.id} className="hover:bg-blue-50/20">
-                        <td className="p-4 text-sm text-gray-500 flex items-center gap-2">
-                          <Calendar size={14} />
-                          {new Date(entry.date).toLocaleDateString()}
+                      <tr key={entry.id} className="hover:bg-blue-50/20 group transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="text-xs font-bold text-gray-700">{new Date(entry.date).toLocaleDateString()}</div>
+                          <div className="text-[10px] text-gray-400">{new Date(entry.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                         </td>
-                        <td className="p-4">
-                          <span className={clsx("inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold", 
-                            entry.type === 'IN' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                          )}>
-                            {entry.type === 'IN' ? <ArrowDownLeft size={12}/> : <ArrowUpRight size={12}/>}
-                            {entry.type}
-                          </span>
+                        <td className="px-4 py-3">
+                           <span className={clsx(
+                             "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase border",
+                             entry.type === 'IN' ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100"
+                           )}>
+                             {entry.type === 'IN' ? <ArrowDownLeft size={10}/> : <ArrowUpRight size={10}/>}
+                             {entry.type}
+                           </span>
                         </td>
-                        <td className="p-4 font-medium text-gray-800">{entry.medicineName}</td>
-                        <td className="p-4 text-center font-bold text-gray-600">{entry.quantity}</td>
-                        <td className="p-4 text-right text-xs font-bold text-gray-500">
-                          {entry.purchasePrice ? `Rs. ${entry.purchasePrice.toLocaleString()}` : '-'}
+                        <td className="px-4 py-3">
+                           <div className="text-sm font-black text-gray-800 leading-tight">{entry.medicineName}</div>
+                           {med && <div className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{med.category} • {med.unit}</div>}
                         </td>
-                        <td className="p-4 text-sm text-gray-500">
-                          {entry.type === 'IN' ? (
-                            <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">{entry.batchNumber || 'N/A'}</span>
-                          ) : (
-                            entry.reason
-                          )}
+                        <td className="px-4 py-3 text-center">
+                           <div className={clsx("text-sm font-black", entry.type === 'IN' ? "text-green-600" : "text-red-600")}>
+                             {entry.type === 'IN' ? '+' : '-'}{entry.quantity}
+                           </div>
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-gray-700 text-sm">
+                           {entry.purchasePrice ? `Rs. ${entry.purchasePrice.toLocaleString()}` : '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                           {entry.type === 'IN' ? (
+                             <div className="flex flex-col gap-1">
+                               <span className="font-mono bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-100 inline-block w-fit">BATCH: {entry.batchNumber || 'N/A'}</span>
+                               <span className="text-[10px] text-gray-400 italic">{entry.reason}</span>
+                             </div>
+                           ) : (
+                             <span className="text-[10px] font-bold text-red-500 uppercase px-2 py-0.5 bg-red-50 rounded border border-red-100">{entry.reason}</span>
+                           )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                </table>
+               {filteredStockEntries.length > stockHistoryLimit && (
+                 <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-center">
+                   <Button variant="outline" size="sm" onClick={() => setStockHistoryLimit(prev => prev + 50)}>
+                     Load More History (+50)
+                   </Button>
+                 </div>
+               )}
              </div>
            </div>
         </div>
